@@ -1,0 +1,9 @@
+name: croft
+version: 0.1.0
+
+authors:
+  - Gabriel Holodak <gthepiper@gmail.com>
+
+crystal: 0.31.1
+
+license: MIT
