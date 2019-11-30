@@ -38,7 +38,9 @@ module Croft
             arg{{i}},
         {% end %}
         )
-        {% if return_type != Nil %}
+        {% if return_type.id == "LibObjc::Instance" %}
+          res.as(LibObjc::Instance)
+        {% elsif return_type != Nil %}
           raise NilAssertionError.new if res.null?
           {{return_type}}.new(res.as(LibObjc::Instance))
         {% end %}
@@ -50,19 +52,15 @@ module Croft
       {% return_type = return_type || Nil %}
       {% arg_types = arg_types || [] of Nil %}
       def {{crystal_name.id}}(
-        {% for i in (0...arg_types.size) %}
-          arg{{i}} : {{arg_types[i]}},
-        {% end %}
+        {% for i in (0...arg_types.size) %} arg{{i}} : {{arg_types[i]}}, {% end %}
       ) : {{ return_type }}
         res = LibObjc.objc_msgSend(
           @obj.as(Void*),
           Croft::Selector["{{name.id}}"],
-          {% for i in (0...arg_types.size) %}
-            arg{{i}},
-        {% end %}
+          {% for i in (0...arg_types.size) %} arg{{i}}, {% end %}
         )
         {% if return_type.id != "Nil" %}
-          raise NilAssertionError.new if res.null?
+          # raise NilAssertionError.new if res.null?
           {{return_type}}.new(res.as(LibObjc::Instance))
         {% end %}
       end
