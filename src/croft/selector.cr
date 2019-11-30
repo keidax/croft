@@ -4,7 +4,11 @@ module Croft
   class Selector
     @sel : LibObjc::SEL
 
-    def initialize(str : String)
+    def self.[](str : ::String)
+      self.new(str)
+    end
+
+    def initialize(str : ::String)
       @sel = LibObjc.sel_registerName(str)
     end
 
@@ -12,7 +16,11 @@ module Croft
 
     def to_s(io)
       name = LibObjc.sel_getName(@sel)
-      io << "<SEL:#{String.new(name)}>"
+      io << "<SEL:#{::String.new(name)}>"
+    end
+
+    def to_unsafe
+      @sel
     end
   end
 end
