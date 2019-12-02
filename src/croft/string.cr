@@ -9,19 +9,19 @@ module Croft
       objc_method "stringWithUTF8String:"
     end
 
-    def self.empty : LibObjc::Instance
+    def self.empty : LibObjc::Instance*
       objc_method "string"
     end
 
     def raw_string : UInt8*
-      LibObjc.objc_msgSend(@obj.as(Void*), Selector["UTF8String"]).as(UInt8*)
+      LibObjc.objc_msgSend(@obj, Selector["UTF8String"]).as(UInt8*)
     end
 
     def initialize(ptr : Pointer)
       if ptr.null?
         @obj = self.class.empty
       else
-        @obj = ptr.as(LibObjc::Instance)
+        @obj = ptr.as(LibObjc::Instance*)
       end
     end
 

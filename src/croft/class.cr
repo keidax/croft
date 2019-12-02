@@ -3,10 +3,8 @@ require "../objc"
 module Croft
   abstract class Class
     # Get around nilability check for class variables
-    NIL_CLASS = Pointer(Void).new(0).as(LibObjc::Class)
-
-    @@cls : LibObjc::Class = NIL_CLASS
-    @obj : LibObjc::Instance
+    @@cls : LibObjc::Class* = Pointer(LibObjc::Class).null
+    @obj : LibObjc::Instance*
 
     @@ivar_set = false
 
@@ -15,12 +13,12 @@ module Croft
       raise NilAssertionError.new if !@@cls
     end
 
-    def self.to_unsafe : Void*
-      @@cls.as(Void*)
+    def self.to_unsafe
+      @@cls
     end
 
-    def to_unsafe : Void*
-      @obj.as(Void*)
+    def to_unsafe
+      @obj
     end
 
     def self.objc_name : ::String
@@ -36,8 +34,8 @@ module Croft
 
     # Initialize a new object
     def initialize
-      new_obj = LibObjc.objc_msgSend(@@cls.as(Void*), Selector["new"])
-      @obj = new_obj.as(LibObjc::Instance)
+      new_obj = LibObjc.objc_msgSend(@@cls, Selector["new"])
+      @obj = new_obj.as(LibObjc::Instance*)
       raise NilAssertionError.new if @obj.null?
 
       assign_self_ivar
@@ -62,11 +60,17 @@ module Croft
     end
 
     macro objc_method(objc_name)
-      {% ret_id = @def.return_type.id %}
+      # Get the concrete return type
+      {% if @def.return_type.id == "self" %}
+        {% ret_type = @type %}
+      {% else %}
+        {% ret_type = @def.return_type.resolve %}
+      {% end%}
+
       # Make a call to objc_msgSend
-      res = {% if ret_id == "Float64" %}
+      res = {% if ret_type == Float64 %}
               LibObjc.objc_msgSend_fpret(
-            {%else%}
+            {% else %}
               LibObjc.objc_msgSend(
             {% end %}
               self,
@@ -75,26 +79,26 @@ module Croft
             )
 
       # Cast to the right return type
-      {% if ret_id == "Nil" %}
+      {% if ret_type == Nil %}
         nil
-      {% elsif ret_id == "LibObjc::Instance" %}
-        res.as(LibObjc::Instance)
-      {% elsif ret_id == "Float64" %}
+      {% elsif ret_type == Float64 %}
         res
+      {% elsif ret_type < Pointer %}
+        res.as({{ret_type.id}})
       {% else %}
-        {% unless ret_id == "Croft::String" %}
+        {% unless ret_type == Croft::String %}
           # Handle a nil string as empty string. Otherwise, raise on nil
           raise NilAssertionError.new if res.null?
-        {%end%}
+        {% end %}
 
-        {{@def.return_type}}.new(res.as(LibObjc::Instance))
+        {{@def.return_type}}.new(res.as(LibObjc::Instance*))
       {% end %}
     end
 
     macro export_instance_method(name, definition)
       {{ definition }}
 
-      imp = ->(self_ : LibObjc::Instance, op : LibObjc::SEL, {{ definition.args.splat }}) do
+      imp = ->(self_ : LibObjc::Instance*, op : LibObjc::SEL, {{ definition.args.splat }}) do
         # Convert object_id back into object reference
         obj_id = LibObjc.object_getIndexedIvars(self_).as(UInt64*)
         obj = Pointer(self).new(obj_id.value).as(self)
