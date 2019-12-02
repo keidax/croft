@@ -8,6 +8,8 @@ module Croft
     @@cls : LibObjc::Class = NIL_CLASS
     @obj : LibObjc::Instance
 
+    @@ivar_set = false
+
     def self.register(name : ::String)
       @@cls = LibObjc.objc_getClass(name)
       raise NilAssertionError.new if !@@cls
@@ -44,6 +46,7 @@ module Croft
     # Store reference to crystal object in objc object.
     # Storing the object_id is the simplest way to get a pointer back.
     private def assign_self_ivar
+      return unless @@ivar_set
       obj_ptr = LibObjc.object_getIndexedIvars(@obj).as(UInt64*)
       obj_ptr.value = object_id
     end
@@ -55,11 +58,15 @@ module Croft
       # Add extra space for a pointer to crystal object
       @@cls ||= LibObjc.objc_allocateClassPair(superclass, name.to_unsafe, extra_bytes: sizeof(UInt64))
       LibObjc.objc_registerClassPair(@@cls)
+      @@ivar_set = true
     end
 
     private macro return_helper(return_type)
       {% if return_type.id == "LibObjc::Instance" %}
         res.as(LibObjc::Instance)
+
+      {% elsif return_type.id == "Float64" %}
+        res
       {% elsif return_type.id != "Nil" %}
         {% unless return_type.id == "Croft::String" %}
           # Handle a nil string as empty string. Otherwise, raise on nil
@@ -94,7 +101,7 @@ module Croft
       def {{crystal_name.id}}(
         {% for i in (0...arg_types.size) %} arg{{i}} : {{arg_types[i]}}, {% end %}
       ) : {{ return_type }}
-        res = LibObjc.objc_msgSend(
+        res = LibObjc.objc_msgSend{% if return_type.id == "Float64" %}_fpret{% end %}(
           @obj.as(Void*),
           Croft::Selector["{{name.id}}"],
           {% for i in (0...arg_types.size) %} arg{{i}}, {% end %}

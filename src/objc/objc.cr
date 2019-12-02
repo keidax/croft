@@ -19,6 +19,7 @@ lib LibObjc
 
   type Instance = Void*
   fun objc_msgSend(self_ : Void*, op : SEL, ...) : Void*
+  fun objc_msgSend_fpret(self_ : Void*, op : SEL, ...) : Float64
 
   type Imp = Void*
   fun class_addMethod(klass : Class, name : SEL, imp : Imp, types : UInt8*) # TODO return BOOL
