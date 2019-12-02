@@ -1,4 +1,5 @@
 @[Link("objc")]
+@[Link(framework: "AppKit")]
 @[Link(framework: "Foundation")]
 lib LibObjc
   type SEL = Void*
