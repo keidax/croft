@@ -5,8 +5,13 @@ module Croft
   class String < Croft::Class
     register("NSString")
 
-    class_method "stringWithUTF8String:", [::String], self, "new"
-    class_method "string", nil, LibObjc::Instance, "empty_string"
+    def self.new(str : ::String) : self
+      objc_method "stringWithUTF8String:"
+    end
+
+    def self.empty : LibObjc::Instance
+      objc_method "string"
+    end
 
     def raw_string : UInt8*
       LibObjc.objc_msgSend(@obj.as(Void*), Selector["UTF8String"]).as(UInt8*)
@@ -14,7 +19,7 @@ module Croft
 
     def initialize(ptr : Pointer)
       if ptr.null?
-        @obj = self.class.empty_string
+        @obj = self.class.empty
       else
         @obj = ptr.as(LibObjc::Instance)
       end

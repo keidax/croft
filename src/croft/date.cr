@@ -4,9 +4,16 @@ module Croft
   class Date < Croft::Class
     register("NSDate")
 
-    class_method "date", nil, self, "now"
-    class_method "dateWithTimeIntervalSinceNow:", [Float64], self, "seconds_from_now"
+    def self.now : self
+      objc_method "date"
+    end
 
-    instance_method "timeIntervalSinceDate:", [self], Float64, "seconds_since"
+    def self.from_now(seconds : Float64) : self
+      objc_method "dateWithTimeIntervalSinceNow:"
+    end
+
+    def seconds_since(other : self) : ::Float64
+      objc_method "timeIntervalSinceDate:"
+    end
   end
 end

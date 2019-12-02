@@ -4,8 +4,12 @@ module Croft
   class UserDefaults < Croft::Class
     register("NSUserDefaults")
 
-    class_method "standardUserDefaults", nil, self, "standard_user_defaults"
+    def self.standard_user_defaults : self
+      objc_method "standardUserDefaults"
+    end
 
-    instance_method "stringForKey:", [Croft::String], Croft::String, "string_for_key"
+    def [](key : Croft::String) : Croft::String
+      objc_method "stringForKey:"
+    end
   end
 end

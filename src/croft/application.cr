@@ -4,8 +4,12 @@ module Croft
   class Application < Croft::Class
     register("NSApplication")
 
-    class_method "sharedApplication", nil, self, "shared_application"
+    def self.shared_application : self
+      objc_method "sharedApplication"
+    end
 
-    instance_method "finishLaunching", nil, nil, "finish_launching"
+    def finish_launching : Nil
+      objc_method "finishLaunching"
+    end
   end
 end

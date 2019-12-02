@@ -4,15 +4,16 @@ module Croft
   class DistributedNotificationCenter < Croft::Class
     register("NSDistributedNotificationCenter")
 
-    class_method "defaultCenter", nil, self, "default_center"
-    instance_method "addObserver:selector:name:object:",
-      [_, Croft::Selector, Croft::String, _],
-      Nil,
-      "add_observer"
+    def self.default : self
+      objc_method "defaultCenter"
+    end
 
-    instance_method "postNotificationName:object:userInfo:deliverImmediately:",
-      [Croft::String, _, _, _],
-      Nil,
-      "post_notification"
+    def add_observer(observer : Croft::Class, sel : Selector, name : Croft::String, obj : _) : Nil
+      objc_method "addObserver:selector:name:object:"
+    end
+
+    def post_notification(name : Croft::String, sender : _, user_info : _, immediate : _) : Nil
+      objc_method "postNotificationName:object:userInfo:deliverImmediately:"
+    end
   end
 end

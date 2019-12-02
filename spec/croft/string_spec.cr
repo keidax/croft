@@ -10,7 +10,7 @@ module Croft
     end
 
     it "can be an empty string" do
-      str = Croft::String.new(Croft::String.empty_string)
+      str = Croft::String.new(Croft::String.empty)
       str.to_s.should eq ""
     end
 

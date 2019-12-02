@@ -15,8 +15,8 @@ module Croft
       raise NilAssertionError.new if !@@cls
     end
 
-    def self.to_unsafe
-      @@cls
+    def self.to_unsafe : Void*
+      @@cls.as(Void*)
     end
 
     def to_unsafe : Void*
@@ -61,54 +61,34 @@ module Croft
       @@ivar_set = true
     end
 
-    private macro return_helper(return_type)
-      {% if return_type.id == "LibObjc::Instance" %}
-        res.as(LibObjc::Instance)
+    macro objc_method(objc_name)
+      {% ret_id = @def.return_type.id %}
+      # Make a call to objc_msgSend
+      res = {% if ret_id == "Float64" %}
+              LibObjc.objc_msgSend_fpret(
+            {%else%}
+              LibObjc.objc_msgSend(
+            {% end %}
+              self,
+              Croft::Selector[{{objc_name}}],
+              {{ @def.args.map(&.internal_name).splat }}
+            )
 
-      {% elsif return_type.id == "Float64" %}
+      # Cast to the right return type
+      {% if ret_id == "Nil" %}
+        nil
+      {% elsif ret_id == "LibObjc::Instance" %}
+        res.as(LibObjc::Instance)
+      {% elsif ret_id == "Float64" %}
         res
-      {% elsif return_type.id != "Nil" %}
-        {% unless return_type.id == "Croft::String" %}
+      {% else %}
+        {% unless ret_id == "Croft::String" %}
           # Handle a nil string as empty string. Otherwise, raise on nil
           raise NilAssertionError.new if res.null?
         {%end%}
 
-        {{return_type}}.new(res.as(LibObjc::Instance))
+        {{@def.return_type}}.new(res.as(LibObjc::Instance))
       {% end %}
-    end
-
-    macro class_method(name, arg_types, return_type, crystal_name = nil)
-      {% crystal_name = crystal_name || name.id %}
-      {% return_type = return_type || Nil %}
-      {% arg_types = arg_types || [] of Nil %}
-      def self.{{crystal_name.id}}(
-        {% for i in (0...arg_types.size) %} arg{{i}} : {{arg_types[i]}}, {% end %}
-      ) : {{ return_type }}
-        res = LibObjc.objc_msgSend(
-          @@cls.as(Void*),
-          Croft::Selector["{{name.id}}"],
-          {% for i in (0...arg_types.size) %} arg{{i}}, {% end %}
-        )
-
-        return_helper({{return_type}})
-      end
-    end
-
-    macro instance_method(name, arg_types, return_type, crystal_name = nil)
-      {% crystal_name = crystal_name || name.id %}
-      {% return_type = return_type || Nil %}
-      {% arg_types = arg_types || [] of Nil %}
-      def {{crystal_name.id}}(
-        {% for i in (0...arg_types.size) %} arg{{i}} : {{arg_types[i]}}, {% end %}
-      ) : {{ return_type }}
-        res = LibObjc.objc_msgSend{% if return_type.id == "Float64" %}_fpret{% end %}(
-          @obj.as(Void*),
-          Croft::Selector["{{name.id}}"],
-          {% for i in (0...arg_types.size) %} arg{{i}}, {% end %}
-        )
-
-        return_helper({{return_type}})
-      end
     end
 
     macro export_instance_method(name, definition)
