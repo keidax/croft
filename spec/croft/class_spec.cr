@@ -20,12 +20,10 @@ end
 module Croft
   describe Class do
     it "can register an existing class" do
-      Testing.to_unsafe.should be_a(LibObjc::Class)
       Testing.objc_name.should eq("NSLogicalTest")
     end
 
     it "can export a Crystal class" do
-      Foo::CustomClass.to_unsafe.should be_a(LibObjc::Class)
       Foo::CustomClass.objc_name.should eq("Foo::CustomClass")
     end
 
