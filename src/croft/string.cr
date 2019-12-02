@@ -14,7 +14,7 @@ module Croft
     end
 
     def raw_string : UInt8*
-      LibObjc.objc_msgSend(@obj, Selector["UTF8String"]).as(UInt8*)
+      LibObjc.msg_send(@obj, Selector["UTF8String"]).as(UInt8*)
     end
 
     def initialize(ptr : Pointer)

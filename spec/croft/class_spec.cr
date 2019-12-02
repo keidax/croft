@@ -1,6 +1,5 @@
 require "../spec_helper"
 
-
 class Testing < Croft::Class
   register("NSLogicalTest") # Just a random class in Foundation
 end
@@ -32,7 +31,7 @@ module Croft
       foo.to_unsafe.null?.should be_false
 
       # TODO is there a better way to get a BOOL result?
-      res = LibObjc.objc_msgSend(foo, Selector["isMemberOfClass:"], Foo::CustomClass)
+      res = LibObjc.msg_send(foo, Selector["isMemberOfClass:"], Foo::CustomClass)
       res.address.should eq(LibObjc::YES)
     end
 
@@ -43,7 +42,7 @@ module Croft
       foo.add_to_count(1)
       foo.count.should eq 1
 
-      LibObjc.objc_msgSend(foo, Selector["addToCount:"], 1)
+      LibObjc.msg_send(foo, Selector["addToCount:"], 1)
       foo.count.should eq 2
     end
   end

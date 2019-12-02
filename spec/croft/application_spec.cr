@@ -23,7 +23,7 @@ module Croft
 
     it "can finish launching" do
       delegate = AppDelegate.new
-      LibObjc.objc_msgSend(Application.shared_application, Selector["setDelegate:"], delegate)
+      LibObjc.msg_send(Application.shared_application, Selector["setDelegate:"], delegate)
 
       Application.shared_application.finish_launching
       chan_result = delegate.chan.receive

@@ -1,11 +1,11 @@
 require "../spec_helper"
 
 describe "LibObjc" do
-  describe "SEL" do
+  describe "Selector" do
     it "can be registered" do
       selector = LibObjc.sel_registerName("HI")
       selector.should_not be_nil
-      selector.should be_a(LibObjc::SEL)
+      selector.should be_a(Pointer(LibObjc::Selector))
     end
 
     it "can be registered multiple times" do
