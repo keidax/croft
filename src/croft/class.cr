@@ -17,12 +17,44 @@ module Croft
       @@cls
     end
 
-    def to_unsafe
-      @obj
+    def to_unsafe : Void*
+      @obj.as(Void*)
     end
 
+    def self.objc_name : ::String
+      ::String.new(LibObjc.class_getName(@@cls))
+    end
+
+    # Initialize with an existing pointer
     def initialize(@obj)
       raise NilAssertionError.new if @obj.null?
+
+      assign_self_ivar
+    end
+
+    # Initialize a new object
+    def initialize
+      new_obj = LibObjc.objc_msgSend(@@cls.as(Void*), Selector["new"])
+      @obj = new_obj.as(LibObjc::Instance)
+      raise NilAssertionError.new if @obj.null?
+
+      assign_self_ivar
+    end
+
+    # Store reference to crystal object in objc object.
+    # Storing the object_id is the simplest way to get a pointer back.
+    private def assign_self_ivar
+      obj_ptr = LibObjc.object_getIndexedIvars(@obj).as(UInt64*)
+      obj_ptr.value = object_id
+    end
+
+    # Register Objective-C version of the class
+    def self.export(name : String? = nil)
+      superclass = LibObjc.objc_getClass("NSObject")
+      name ||= self.name
+      # Add extra space for a pointer to crystal object
+      @@cls ||= LibObjc.objc_allocateClassPair(superclass, name.to_unsafe, extra_bytes: sizeof(UInt64))
+      LibObjc.objc_registerClassPair(@@cls)
     end
 
     private macro return_helper(return_type)
@@ -70,6 +102,19 @@ module Croft
 
         return_helper({{return_type}})
       end
+    end
+
+    macro export_instance_method(name, definition)
+      {{ definition }}
+
+      imp = ->(self_ : LibObjc::Instance, op : LibObjc::SEL, {{ definition.args.splat }}) do
+        # Convert object_id back into object reference
+        obj_id = LibObjc.object_getIndexedIvars(self_).as(UInt64*)
+        obj = Pointer(self).new(obj_id.value).as(self)
+        obj.{{ definition.name.id }}({{ definition.args.map(&.name).splat }})
+      end
+
+      LibObjc.class_addMethod(@@cls, Croft::Selector["{{name.id}}"], imp.pointer.as(LibObjc::Imp), "v@:")
     end
   end
 end
