@@ -30,9 +30,8 @@ module Croft
       foo = Foo::CustomClass.new
       foo.to_unsafe.null?.should be_false
 
-      # TODO is there a better way to get a BOOL result?
-      res = LibObjc.msg_send(foo, Selector["isMemberOfClass:"], Foo::CustomClass)
-      res.address.should eq(LibObjc::YES)
+      res = LibObjc::Msg.send(foo, "isMemberOfClass:", [Foo::CustomClass], Bool)
+      res.should be_true
     end
 
     it "can define and call exported Crystal methods" do

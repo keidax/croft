@@ -62,37 +62,21 @@ module Croft
     macro objc_method(objc_name)
       # Get the concrete return type
       {% if @def.return_type.id == "self" %}
-        {% ret_type = @type %}
+        {% return_type = @type %}
       {% else %}
-        {% ret_type = @def.return_type.resolve %}
+        {% return_type = @def.return_type.resolve %}
       {% end %}
 
-      # Make a call to objc_msgSend
-      res = {% if ret_type == Float64 %}
-              LibObjc.msg_send_fpret(
-            {% else %}
-              LibObjc.msg_send(
-            {% end %}
-              self,
-              Croft::Selector[{{objc_name}}],
-              {{ @def.args.map(&.internal_name).splat }}
-            )
-
-      # Cast to the right return type
-      {% if ret_type == Nil %}
-        nil
-      {% elsif ret_type == Float64 %}
-        res
-      {% elsif ret_type < Pointer %}
-        res.as({{ret_type.id}})
-      {% else %}
-        {% unless ret_type == Croft::String %}
-          # Handle a nil string as empty string. Otherwise, raise on nil
-          raise NilAssertionError.new if res.null?
-        {% end %}
-
-        {{@def.return_type}}.new(res.as(LibObjc::Instance*))
-      {% end %}
+      LibObjc::Msg.send(
+        instance: self,
+        name: {{objc_name}},
+        return_type: {{return_type}},
+        {% if @def.args.size > 0  %}
+          args: {{@def.args.map(&.internal_name)}},
+        {%else%}
+          args: [] of Nil,
+        {%end%}
+      )
     end
 
     macro export_instance_method(name, definition)
