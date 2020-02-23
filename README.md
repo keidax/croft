@@ -1,16 +1,16 @@
 # croft
 
-TODO: Write a description here
+A Crystal wrapper for Objective-C APIs.
 
 ## Installation
 
 1. Add the dependency to your `shard.yml`:
 
-   ```yaml
-   dependencies:
-     croft:
-       github: keidax/croft
-   ```
+```yaml
+dependencies:
+  croft:
+    github: keidax/croft
+```
 
 2. Run `shards install`
 
