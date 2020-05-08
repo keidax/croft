@@ -2,6 +2,8 @@
 
 A Crystal wrapper for Objective-C APIs.
 
+Inspired by [hoop](https://github.com/0x73/hoop).
+
 ## Installation
 
 1. Add the dependency to your `shard.yml`:
